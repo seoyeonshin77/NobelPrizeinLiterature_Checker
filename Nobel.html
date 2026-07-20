@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>노벨문학상 독서 체크리스트</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+    .header { position: sticky; top: 0; background: white; padding: 20px 0; border-bottom: 2px solid #eee; }
+    .progress-bar { width: 100%; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+    .progress { height: 100%; background: #4CAF50; width: 0%; transition: width 0.3s; }
+    .item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .item input { margin-right: 15px; transform: scale(1.3); cursor: pointer; }
+    .info { flex: 1; }
+    .year { color: #888; font-size: 0.9em; }
+    .author { font-weight: bold; }
+    .work { color: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>📚 노벨문학상 독서 체크리스트</h2>
+    <div id="status">읽은 책: 0 / 0 (0%)</div>
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+  <script>
+    // 1. 역대 노벨문학상 데이터 (필요한 데이터를 계속 추가하면 됩니다)
+const data = [
+  { id: 1, year: 1901, author: "쉬리 프뤼돔", country: "프랑스", work: "고독과 심상" },
+  { id: 2, year: 1902, author: "테오도어 몸젠", country: "독일", work: "로마사" },
+  { id: 3, year: 1903, author: "비외른스티에르네 비외른손", country: "노르웨이", work: "신유형" },
+  { id: 4, year: 1904, author: "프레데리크 미스트랄", country: "프랑스", work: "미레이오" },
+  { id: 5, year: 1904, author: "호세 에체가라이", country: "스페인", work: "위대한 가레오토" },
+  { id: 6, year: 1905, author: "헨리크 시엔키에비치", country: "폴란드", work: "쿠오 바디스" },
+  { id: 7, year: 1906, author: "조수에 카르두치", country: "이탈리아", work: "새로운 시와 리듬" },
+  { id: 8, year: 1907, author: "러디어드 키플링", country: "영국", work: "정글북" },
+  { id: 9, year: 1908, author: "루돌프 아이크엔", country: "독일", work: "인생의 의미와 가치" },
+  { id: 10, year: 1909, author: "셀마 라겔뢰프", country: "스웨덴", work: "닐스의 신기한 모험" },
+  { id: 11, year: 1910, author: "파울 하이제", country: "독일", work: "아라비아타" },
+  { id: 12, year: 1911, author: "모리스 메테르링크", country: "벨기에", work: "파랑새" },
+  { id: 13, year: 1912, author: "게르하르트 하웁트만", country: "독일", work: "해의 침몰" },
+  { id: 14, year: 1913, author: "라빈드라나트 타고르", country: "인도", work: "기탄잘리" },
+  // 1914년 미수상
+  { id: 15, year: 1915, author: "로맹 롤랑", country: "프랑스", work: "장 크리스토프" },
+  { id: 16, year: 1916, author: "베르너 фон 하이덴슈탐", country: "스웨덴", work: "카롤리네르나" },
+  { id: 17, year: 1917, author: "카를 예스페르센", country: "덴마크", work: "약속의 땅" },
+  { id: 18, year: 1917, author: "헨리크 폰토피단", country: "덴마크", work: "행운의 페르" },
+  // 1918년 미수상
+  { id: 19, year: 1919, author: "카를 슈피텔러", country: "스위스", work: "올림포스의 봄" },
+  { id: 20, year: 1920, author: "크누트 함순", country: "노르웨이", work: "대지의 혜택" },
+  { id: 21, year: 1921, author: "아나톨 프랑스", country: "프랑스", work: "실베스트르 보나르의 죄" },
+  { id: 22, year: 1922, author: "하신토 베나벤테", country: "스페인", work: "이익의 유대" },
+  { id: 23, year: 1923, author: "윌리엄 버틀러 예이츠", country: "아일랜드", work: "어경과 기타 시들" },
+  { id: 24, year: 1924, author: "브와디스와프 레이몬트", country: "폴란드", work: "농민" },
+  { id: 25, year: 1925, author: "버나드 쇼", country: "아일랜드", work: "피그말리온" },
+  { id: 26, year: 1926, author: "그라치아 데렐다", country: "이탈리아", work: "바람에 흔들리는 Reeds" },
+  { id: 27, year: 1927, author: "앙리 베르그송", country: "프랑스", work: "창조적 진화" },
+  { id: 28, year: 1928, author: "시그리드 운세트", country: "노르웨이", work: "크리스틴 라브란스다테르" },
+  { id: 29, year: 1929, author: "토마스 만", country: "독일", work: "마의 산" },
+  { id: 30, year: 1930, author: "싱클레어 루이스", country: "미국", work: "바빗" },
+  { id: 31, year: 1931, author: "에릭 악셀 카를펠트", country: "스웨덴", work: "사막과 환상" },
+  { id: 32, year: 1932, author: "존 골즈워디", country: "영국", work: "포사이트가 이야기" },
+  { id: 33, year: 1933, author: "이반 부닌", country: "소련", work: "아르세니예프의 생애" },
+  { id: 34, year: 1934, author: "루이지 피란델로", country: "이탈리아", work: "작가를 찾는 6인의 등장인물" },
+  // 1935년 미수상
+  { id: 35, year: 1936, author: "유진 오닐", country: "미국", work: "밤으로의 긴 여로" },
+  { id: 36, year: 1937, author: "로제 마르탱 뒤 가르", country: "프랑스", work: "티보 가의 사람들" },
+  { id: 37, year: 1938, author: "펄 벅", country: "미국", work: "대지" },
+  { id: 38, year: 1939, author: "프란스 에밀 실란패", country: "핀란드", work: "젊었을 때 죽음을 맞이하다" },
+  // 1940~1943년 미수상
+  { id: 39, year: 1944, author: "요하네스 빌헬름 옌센", country: "덴마크", work: "긴 여정" },
+  { id: 40, year: 1945, author: "가브리엘라 미스트랄", country: "칠레", work: "비탄" },
+  { id: 41, year: 1946, author: "헤르만 헤세", country: "스위스", work: "데미안" },
+  { id: 42, year: 1947, author: "앙드레 지드", country: "프랑스", work: "좁은 문" },
+  { id: 43, year: 1948, author: "T. S. 엘리엇", country: "영국", work: "황무지" },
+  { id: 44, year: 1949, author: "윌리엄 포크너", country: "미국", work: "음향과 분노" },
+  { id: 45, year: 1950, author: "버트런드 러셀", country: "영국", work: "서양철학사" },
+  { id: 46, year: 1951, author: "파르 라게르크비스트", country: "스웨덴", work: "바라바" },
+  { id: 47, year: 1952, author: "프랑수아 모리악", country: "프랑스", work: "사랑의 사막" },
+  { id: 48, year: 1953, author: "윈스턴 처칠", country: "영국", work: "제2차 세계대전 회고록" },
+  { id: 49, year: 1954, author: "어니스트 헤밍웨이", country: "미국", work: "노인과 바다" },
+  { id: 50, year: 1955, author: "할도르 락스네스", country: "아이슬란드", work: "독립한 민중" },
+  { id: 51, year: 1956, author: "후안 라몬 히메네스", country: "스페인", work: "플라테로와 나" },
+  { id: 52, year: 1957, author: "알베르 카뮈", country: "프랑스", work: "이방인" },
+  { id: 53, year: 1958, author: "보리스 파스테르나크", country: "소련", work: "닥터 지바고" },
+  { id: 54, year: 1959, author: "살바토레 ква지모도", country: "이탈리아", work: "시선" },
+  { id: 55, year: 1960, author: "생존 페르스", country: "프랑스", work: "이정표" },
+  { id: 56, year: 1961, author: "이보 안드리치", country: "유고슬라비아", work: "드리나 강의 다리" },
+  { id: 57, year: 1962, author: "존 스타인벡", country: "미국", work: "분노의 포도" },
+  { id: 58, year: 1963, author: "요르기오스 세페리스", country: "그리스", work: "회망" },
+  { id: 59, year: 1964, author: "장폴 사르트르", country: "프랑스", work: "구토" },
+  { id: 60, year: 1965, author: "미하일 숄로호프", country: "소련", work: "고요한 돈 강" },
+  { id: 61, year: 1966, author: "슈무엘 요세프 아그논", country: "이스라엘", work: "나들이" },
+  { id: 62, year: 1966, author: "넬리 작스", country: "스웨덴", work: "죽음의 집에서" },
+  { id: 63, year: 1967, author: "미겔 앙헬 아스투리아스", country: "과테말라", work: "옥수수의 사람들" },
+  { id: 64, year: 1968, author: "카와바타 야스나리", country: "일본", work: "설국" },
+  { id: 65, year: 1969, author: "사뮈엘 베케트", country: "아일랜드", work: "고도를 기다리며" },
+  { id: 66, year: 1970, author: "알렉산드르 솔제니친", country: "소련", work: "이반 데니소비치, 수용소의 하루" },
+  { id: 67, year: 1971, author: "파블로 네루다", country: "칠레", work: "모두의 노래" },
+  { id: 68, year: 1972, author: "하인리히 뵐", country: "서독", work: "카타리나 블룸의 잃어버린 명예" },
+  { id: 69, year: 1973, author: "패트릭 화이트", country: "호주", work: "폭풍의 눈" },
+  { id: 70, year: 1974, author: "에이빈드 욘손", country: "스웨덴", work: "크릴론 이야기" },
+  { id: 71, year: 1974, author: "하뤼 마르틴손", country: "스웨덴", work: "아니아라" },
+  { id: 72, year: 1975, author: "에우제니오 몬탈레", country: "이탈리아", work: "오징어의 뼈" },
+  { id: 73, year: 1976, author: "솔 벨로", country: "미국", work: "허조그" },
+  { id: 74, year: 1977, author: "비센테 알레이산드레", country: "스페인", work: "파괴 또는 사랑" },
+  { id: 75, year: 1978, author: "아이작 바셰비스 싱어", country: "미국", work: "쇼샤" },
+  { id: 76, year: 1979, author: "오디세아스 엘리티스", country: "그리스", work: "아시온 에스티" },
+  { id: 77, year: 1980, author: "체스와프 미워시", country: "폴란드", work: "포로된 마음" },
+  { id: 78, year: 1981, author: "엘리아스 카네티", country: "영국", work: "군중과 권력" },
+  { id: 79, year: 1982, author: "가브리엘 가르시아 마르케스", country: "콜롬비아", work: "백년 동안의 고독" },
+  { id: 80, year: 1983, author: "윌리엄 골딩", country: "영국", work: "파리대왕" },
+  { id: 81, year: 1984, author: "야로슬라프 세이페르트", country: "체코슬로바키아", work: "세계의 모든 아름다움" },
+  { id: 82, year: 1985, author: "클로드 시몽", country: "프랑스", work: "플랑드르의 도로" },
+  { id: 83, year: 1986, author: "볼레 쇼잉카", country: "나이지리아", work: "해설자들" },
+  { id: 84, year: 1987, author: "조지프 브로드스키", country: "미국", work: "하나보다 적은" },
+  { id: 85, year: 1988, author: "나기브 마후즈", country: "이집트", work: "카이로 3부작" },
+  { id: 86, year: 1989, author: "카밀로 호세 세라", country: "스페인", work: "파스쿠알 두아르테 일가" },
+  { id: 87, year: 1990, author: "옥타비오 파스", country: "멕시코", work: "고독의 미로" },
+  { id: 88, year: 1991, author: "네이딘 고디머", country: "남아프리카 공화국", work: "줄리의 사람들" },
+  { id: 89, year: 1992, author: "데릭 월콧", country: "세인트루시아", work: "오메로스" },
+  { id: 90, year: 1993, author: "토니 모리슨", country: "미국", work: "빌러비드" },
+  { id: 91, year: 1994, author: "오에 겐자부로", country: "일본", work: "개인적인 체험" },
+  { id: 92, year: 1995, author: "셰이머스 히니", country: "아일랜드", work: "어느 자연주의자의 죽음" },
+  { id: 93, year: 1996, author: "비스와바 쉼보르스카", country: "폴란드", work: "끝과 시작" },
+  { id: 94, year: 1997, author: "다리오 포", country: "이탈리아", work: "어느 무정부주의자의 우연한 죽음" },
+  { id: 95, year: 1998, author: "주제 사라마구", country: "포르투갈", work: "눈먼 자들의 도시" },
+  { id: 96, year: 1999, author: "귄터 글라스", country: "독일", work: "양철북" },
+  { id: 97, year: 2000, author: "고행젠", country: "프랑스", work: "영혼의 산" },
+  { id: 98, year: 2001, author: "V. S. 나이폴", country: "영국", work: "강의 굴곡" },
+  { id: 99, year: 2002, author: "임레 케르테스", country: "헝가리", work: "운명 없음" },
+  { id: 100, year: 2003, author: "J. M. 쿤체", country: "남아프리카 공화국", work: "추락" },
+  { id: 101, year: 2004, author: "엘프리데 예리네크", country: "오스트리아", work: "피아노 치는 여자" },
+  { id: 102, year: 2005, author: "해럴드 핀터", country: "영국", work: "생일 파티" },
+  { id: 103, year: 2006, author: "오르한 파묵", country: "튀르키예", work: "내 이름은 빨강" },
+  { id: 104, year: 2007, author: "도리스 레싱", country: "영국", work: "황금 노트북" },
+  { id: 105, year: 2008, author: "장마리 귀스타브 르 클레지오", country: "프랑스", work: "황금물고기" },
+  { id: 106, year: 2009, author: "헤르타 뮐러", country: "독일", work: "숨그네" },
+  { id: 107, year: 2010, author: "마리오 바르가스 요사", country: "페루", work: "염소의 축제" },
+  { id: 108, year: 2011, author: "토마스 트란스트뢰메르", country: "스웨덴", work: "기억이 나를 본다" },
+  { id: 109, year: 2012, author: "모옌", country: "중국", work: "붉은 수수밭" },
+  { id: 110, year: 2013, author: "앨리스 먼로", country: "캐나다", work: "디오원" },
+  { id: 111, year: 2014, author: "파트리크 모디아노", country: "프랑스", work: "어두운 상점들의 거리" },
+  { id: 112, year: 2015, author: "스베틀라나 알렉시예비치", country: "벨라루스", work: "전쟁은 여자의 얼굴을 하지 않았다" },
+  { id: 113, year: 2016, author: "밥 딜런", country: "미국", work: "바람만이 아는 대답" },
+  { id: 114, year: 2017, author: "가즈오 이시구로", country: "영국", work: "남겨진 나날" },
+  { id: 115, year: 2018, author: "올가 토카르추크", country: "폴란드", work: "플라이츠" },
+  { id: 116, year: 2019, author: "페터 한트케", country: "오스트리아", work: "관객모독" },
+  { id: 117, year: 2020, author: "루이즈 글릭", country: "미국", work: "야생 붓꽃" },
+  { id: 118, year: 2021, author: "압둘라자크 구르나", country: "탄자니아", work: "낙원" },
+  { id: 119, year: 2022, author: "아니 에르노", country: "프랑스", work: "세월" },
+  { id: 120, year: 2023, author: "욘 포세", country: "노르웨이", work: "아침 그리고 저녁" },
+  { id: 121, year: 2024, author: "한강", country: "대한민국", work: "채식주의자" },
+  { id: 122, year: 2025, author: "크러스너호르커이 라슬로", country: "헝가리", work: "사탄탱고" }
+];
+
+    // 저장된 읽은 목록(id 리스트) 불러오기
+    let savedRead = JSON.parse(localStorage.getItem('nobel_read') || '[]');
+
+    function render() {
+      const listDiv = document.getElementById('list');
+      listDiv.innerHTML = '';
+
+      data.forEach(item => {
+        const isChecked = savedRead.includes(item.id);
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleRead(${item.id})">
+          <div class="info">
+            <span class="year">[${item.year}]</span>
+            <span class="author">${item.author}</span> - 
+            <span class="work">${item.work}</span>
+          </div>
+        `;
+        listDiv.appendChild(div);
+      });
+
+      updateProgress();
+    }
+
+    function toggleRead(id) {
+      if (savedRead.includes(id)) {
+        savedRead = savedRead.filter(readId => readId !== id);
+      } else {
+        savedRead.push(id);
+      }
+      localStorage.setItem('nobel_read', JSON.stringify(savedRead));
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = data.length;
+      const count = savedRead.length;
+      const percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+
+      document.getElementById('status').innerText = `읽은 책: ${count} / ${total} (${percent}%)`;
+      document.getElementById('progress').style.width = `${percent}%`;
+    }
+
+    render();
+  </script>
+</body>
+</html>
